@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MDV V8 Smart Terminal v8.9</title>
+    <title>HVAC Inspection UKS2 Hydrogen</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -23,7 +23,7 @@
         .animate-pulse-red { animation: pulse-red 2s infinite; }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
     </style>
 </head>
 <body class="bg-[#f1f5f9] dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen font-sans antialiased transition-colors duration-300">
@@ -32,12 +32,12 @@
         <div class="max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-4">
                 <div class="bg-gradient-to-br from-blue-700 to-emerald-500 p-3 rounded-2xl text-white shadow-lg shadow-emerald-500/20">
-                    <i class="fas fa-microchip text-xl"></i>
+                    <i class="fas fa-industry text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-black uppercase tracking-tight leading-none italic">
-                        <span class="text-blue-700 dark:text-blue-400">MDV V8</span>
-                        <span class="text-emerald-600 dark:text-emerald-400 ml-1 font-light">Smart Terminal</span>
+                    <h1 class="text-xl font-black uppercase tracking-tight leading-none">
+                        <span class="text-blue-700 dark:text-blue-400">HVAC INSPECTION</span>
+                        <span class="text-emerald-600 dark:text-emerald-400 ml-1">UKS2 HYDROGEN</span>
                     </h1>
                     <div id="cloudStatus" class="text-[9px] font-bold uppercase text-slate-500 bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded shadow-sm inline-block mt-1">
                         <i class="fas fa-sync-alt mr-1"></i> Инициализация...
@@ -106,11 +106,32 @@
 
     <script>
         let data = [];
-        let isSyncLocked = false; // Блокировка от перезаписи при сохранении
+        let isSyncLocked = false; 
         const tableBody = document.getElementById('tableBody');
         
+        // Получаем правильную локальную дату для новых записей
+        function getLocalYMD() {
+            const d = new Date();
+            const offset = d.getTimezoneOffset() * 60000;
+            return new Date(d.getTime() - offset).toISOString().split('T')[0];
+        }
+
+        // 🔥 ЖЕЛЕЗНЫЙ ФИЛЬТР ДАТЫ: Исправляет баг Google с длинными датами
+        function getSafeDate(val) {
+            if (!val) return getLocalYMD();
+            let str = String(val).trim();
+            if (str.includes('T')) {
+                try {
+                    let d = new Date(str);
+                    let offset = d.getTimezoneOffset() * 60000;
+                    return new Date(d.getTime() - offset).toISOString().split('T')[0];
+                } catch(e) { return getLocalYMD(); }
+            }
+            return str.substring(0, 10);
+        }
+        
         function getDefaultData() {
-            const d = new Date().toISOString().split('T')[0];
+            const d = getLocalYMD();
             return [
                 { date: d, kks: 'XAA01EB001', type: 'IDU', area: 'Rectifier Room', press: 0, temp: 0, comp: 'Running', power: 'Normal', filter: 'Clean', alarm: 'Normal' },
                 { date: d, kks: 'XAA01EB002', type: 'IDU', area: 'Rectifier Room', press: 0, temp: 0, comp: 'Running', power: 'Normal', filter: 'Clean', alarm: 'Normal' },
@@ -184,7 +205,7 @@
         }
 
         async function sync() {
-            if (isSyncLocked) return; // Если мы сейчас сохраняем - не трогаем данные
+            if (isSyncLocked) return;
             const statusEl = document.getElementById('cloudStatus');
             if (CLOUD_URL.includes("ВСТАВЬ")) return;
 
@@ -212,13 +233,12 @@
 
         async function save(isInit = false) {
             if (CLOUD_URL.includes("ВСТАВЬ")) return;
-            isSyncLocked = true; // Блокируем Sync
+            isSyncLocked = true; 
             const statusEl = document.getElementById('cloudStatus');
             statusEl.innerHTML = '<i class="fas fa-cloud-upload-alt mr-1"></i> СОХРАНЕНИЕ...';
             
             try {
                 await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-                // Ждем 3 секунды, чтобы Google точно записал данные, прежде чем разрешать Sync
                 setTimeout(() => { isSyncLocked = false; sync(); }, 3000);
             } catch (e) { isSyncLocked = false; }
         }
@@ -229,8 +249,10 @@
 
             fData.forEach((item, i) => {
                 const isIDU = item.type === 'IDU';
-                const days = Math.floor((new Date() - new Date(item.date || new Date().toISOString().split('T')[0]))/(1000*60*60*24));
+                const safeDateVal = getSafeDate(item.date); // 🔥 Переводим дату из Google в нормальную
+                const days = Math.floor((new Date(getLocalYMD()) - new Date(safeDateVal))/(1000*60*60*24));
                 const isDue = (isIDU && days >= 7) || (!isIDU && days >= 3);
+                
                 if (isDue) due++;
                 if (item.comp === 'Running' || item.comp === 'Standby') run++;
                 
@@ -238,7 +260,7 @@
                 tr.className = `border-b dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all ${isDue ? 'animate-pulse-red bg-red-50/30' : ''}`;
                 
                 tr.innerHTML = `
-                    <td class="px-4 py-4"><input type="date" value="${item.date || new Date().toISOString().split('T')[0]}" onchange="u(${i},'date',this.value)" class="bg-transparent text-[10px] font-black outline-none dark:text-slate-300 dark:[color-scheme:dark]"></td>
+                    <td class="px-4 py-4"><input type="date" value="${safeDateVal}" onchange="u(${i},'date',this.value)" class="bg-transparent text-[10px] font-black outline-none dark:text-slate-300 dark:[color-scheme:dark]"></td>
                     <td class="px-4 py-4"><div class="font-mono font-black text-sm text-blue-700 dark:text-blue-400">${item.kks}</div><div class="text-[9px] opacity-50 uppercase font-bold">${item.type}</div></td>
                     <td class="px-4 py-4"><input value="${item.area || ''}" onchange="u(${i},'area',this.value)" class="bg-transparent text-[10px] font-black w-full outline-none uppercase text-slate-500"></td>
                     <td class="px-2 py-4 text-center">${isIDU ? '-' : `<input type="number" step="0.1" value="${item.press || 0}" onchange="u(${i},'press',this.value)" class="w-14 bg-white dark:bg-slate-900 border rounded text-center text-xs font-bold py-1">`}</td>
@@ -253,7 +275,7 @@
                     </td>
                     <td class="px-4 py-4 text-center"><select onchange="u(${i},'power',this.value)" class="bg-transparent text-[10px] font-black uppercase outline-none"><option value="Normal" ${item.power=='Normal'?'selected':''}>Normal</option><option value="Off" ${item.power=='Off'?'selected':''}>Off</option></select></td>
                     <td class="px-4 py-4 text-center"><select onchange="u(${i},'filter',this.value)" class="bg-transparent text-[10px] font-black uppercase outline-none"><option value="Clean" ${item.filter=='Clean'?'selected':''}>Clean</option><option value="Dirty" ${item.filter=='Dirty'?'selected':''}>Dirty</option></select></td>
-                    <td class="px-4 py-4 text-center"><button onclick="u(${i},'date','${new Date().toISOString().split('T')[0]}')" class="w-8 h-8 rounded-full ${isDue?'bg-orange-500 text-white shadow-lg':'bg-slate-100 dark:bg-slate-800 text-slate-400'}"><i class="fas fa-check text-[10px]"></i></button></td>
+                    <td class="px-4 py-4 text-center"><button onclick="u(${i},'date','${getLocalYMD()}')" class="w-8 h-8 rounded-full ${isDue?'bg-orange-500 text-white shadow-lg':'bg-slate-100 dark:bg-slate-800 text-slate-400'}"><i class="fas fa-check text-[10px]"></i></button></td>
                     <td class="px-4 py-4 text-center"><button onclick="t(${i})" class="text-[9px] font-black uppercase px-3 py-1 rounded-full ${item.alarm=='Alarm'?'bg-red-500 text-white':'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30'}">${item.alarm}</button></td>
                 `;
                 tableBody.appendChild(tr);
@@ -268,12 +290,12 @@
         function t(i) { data[i].alarm = data[i].alarm == 'Normal' ? 'Alarm' : 'Normal'; render(); save(); }
         function resetToDefault() { if(confirm("Сбросить базу?")) { data = getDefaultData(); save(true); render(); } }
         function toggleTheme() { document.documentElement.classList.toggle('dark'); }
-        function exportCSV() { const b = new Blob(["\ufeff" + Papa.unparse(data)], { type: 'text/csv;charset=utf-8;' }); const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "MDV_V8_Report.csv"; a.click(); }
-        function copyTelegramReport() { navigator.clipboard.writeText(`⚡ MDV V8 REPORT: ${new Date().toLocaleDateString()}\n🔹 Units: ${data.length}\n🔹 Running: ${document.getElementById('statComp').innerText}\n🔹 Maintenance Due: ${document.getElementById('statDue').innerText}`).then(()=>alert("Copied!")); }
+        function exportCSV() { const b = new Blob(["\ufeff" + Papa.unparse(data)], { type: 'text/csv;charset=utf-8;' }); const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "HVAC_UKS2_Report.csv"; a.click(); }
+        function copyTelegramReport() { navigator.clipboard.writeText(`⚡ HVAC UKS2 HYDROGEN REPORT: ${getLocalYMD()}\n🔹 Units: ${data.length}\n🔹 Running: ${document.getElementById('statComp').innerText}\n🔹 Maintenance Due: ${document.getElementById('statDue').innerText}`).then(()=>alert("Отчет скопирован!")); }
         
         window.onload = () => {
             sync();
-            setInterval(sync, 60000); // Авто-обновление раз в минуту
+            setInterval(sync, 60000); 
         };
 
         document.getElementById('search').oninput = e => render(data.filter(x => x.kks.toLowerCase().includes(e.target.value.toLowerCase()) || x.area.toLowerCase().includes(e.target.value.toLowerCase())));
