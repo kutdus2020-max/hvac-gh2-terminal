@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HVAC CLOUD v8.8</title>
+    <title>MDV V8 Smart Terminal v8.9</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -19,10 +19,11 @@
     </script>
     
     <style>
-        @keyframes pulse-red { 0%, 100% { background-color: rgba(239, 68, 68, 0.1); } 50% { background-color: rgba(239, 68, 68, 0.3); } }
+        @keyframes pulse-red { 0%, 100% { background-color: rgba(239, 68, 68, 0.05); } 50% { background-color: rgba(239, 68, 68, 0.2); } }
         .animate-pulse-red { animation: pulse-red 2s infinite; }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
     </style>
 </head>
 <body class="bg-[#f1f5f9] dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen font-sans antialiased transition-colors duration-300">
@@ -30,24 +31,24 @@
     <nav class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-800 p-4 sticky top-0 z-50 shadow-sm">
         <div class="max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-4">
-                <div class="bg-gradient-to-br from-red-600 to-orange-500 p-3 rounded-2xl text-white shadow-lg shadow-orange-500/20">
-                    <i class="fas fa-fire text-xl"></i>
+                <div class="bg-gradient-to-br from-blue-700 to-emerald-500 p-3 rounded-2xl text-white shadow-lg shadow-emerald-500/20">
+                    <i class="fas fa-microchip text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-black uppercase tracking-tight leading-none">
-                        <span class="text-red-600 dark:text-red-400">HVAC UKS GH2</span>
-                        <span class="text-slate-400 text-sm ml-1">v8.8</span>
+                    <h1 class="text-xl font-black uppercase tracking-tight leading-none italic">
+                        <span class="text-blue-700 dark:text-blue-400">MDV V8</span>
+                        <span class="text-emerald-600 dark:text-emerald-400 ml-1 font-light">Smart Terminal</span>
                     </h1>
                     <div id="cloudStatus" class="text-[9px] font-bold uppercase text-slate-500 bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded shadow-sm inline-block mt-1">
-                        <i class="fas fa-spinner fa-spin mr-1"></i> Ожидание / Waiting...
+                        <i class="fas fa-sync-alt mr-1"></i> Инициализация...
                     </div>
                 </div>
             </div>
             <div class="flex flex-wrap gap-2 items-center justify-center">
                 <button onclick="toggleTheme()" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-amber-400 flex items-center justify-center border border-slate-200 dark:border-slate-700 hover:bg-slate-200 transition-all"><i id="themeIcon" class="fas fa-moon"></i></button>
-                <button onclick="exportCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg transition-all"><i class="fas fa-download mr-1"></i> EXPORT</button>
-                <button onclick="copyTelegramReport()" class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all"><i class="fab fa-telegram-plane mr-1"></i> TG REPORT</button>
-                <button onclick="resetToDefault()" class="bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-xl text-xs font-black hover:bg-red-600 hover:text-white transition-colors"><i class="fas fa-skull-crossbones mr-1"></i> ЖЕСТКИЙ СБРОС</button>
+                <button onclick="exportCSV()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg transition-all"><i class="fas fa-file-excel mr-1"></i> EXPORT</button>
+                <button onclick="copyTelegramReport()" class="bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all"><i class="fab fa-telegram-plane mr-1"></i> TG REPORT</button>
+                <button onclick="resetToDefault()" class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-red-500 transition-colors"><i class="fas fa-sync mr-1"></i> RESET</button>
             </div>
         </div>
     </nav>
@@ -56,21 +57,21 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="bg-white dark:bg-slate-800 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col items-center md:items-start transition-all hover:shadow-md">
                 <div class="flex items-center gap-2 mb-1">
-                    <i class="fas fa-server text-slate-400"></i>
+                    <i class="fas fa-layer-group text-slate-400"></i>
                     <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Всего Блоков / Total Fleet</p>
                 </div>
                 <div id="statTotal" class="text-4xl font-black text-slate-800 dark:text-white">0</div>
             </div>
-            <div class="bg-white dark:bg-slate-800 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-700 border-t-4 border-t-blue-500 flex flex-col items-center md:items-start transition-all hover:shadow-md">
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-700 border-t-4 border-t-blue-600 flex flex-col items-center md:items-start transition-all hover:shadow-md">
                 <div class="flex items-center gap-2 mb-1">
-                    <i class="fas fa-fan text-blue-500"></i>
-                    <p class="text-blue-500 text-[10px] font-black uppercase tracking-widest">В работе / Running Units</p>
+                    <i class="fas fa-wind text-blue-600"></i>
+                    <p class="text-blue-600 text-[10px] font-black uppercase tracking-widest">В работе / Units Running</p>
                 </div>
-                <div id="statComp" class="text-4xl font-black text-blue-600 dark:text-blue-400">0</div>
+                <div id="statComp" class="text-4xl font-black text-blue-700 dark:text-blue-400">0</div>
             </div>
             <div class="bg-white dark:bg-slate-800 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-700 border-t-4 border-t-orange-500 flex flex-col items-center md:items-start transition-all hover:shadow-md">
                 <div class="flex items-center gap-2 mb-1">
-                    <i class="fas fa-exclamation-triangle text-orange-500 animate-pulse"></i>
+                    <i class="fas fa-tools text-orange-500 animate-pulse"></i>
                     <p class="text-orange-500 text-[10px] font-black uppercase tracking-widest">Просрочено ТО / Maint. Due</p>
                 </div>
                 <div id="statDue" class="text-4xl font-black text-orange-600 dark:text-orange-400">0</div>
@@ -78,6 +79,9 @@
         </div>
 
         <div class="bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+            <div class="p-6 border-b dark:border-slate-700 flex flex-col md:row justify-between items-center gap-4 bg-slate-50/50 dark:bg-slate-900/30">
+                <input type="text" id="search" placeholder="Поиск (Search KKS / Area)..." class="w-full md:w-96 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all dark:text-white shadow-inner">
+            </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead class="bg-slate-100/50 dark:bg-slate-900 text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest border-b border-slate-200 dark:border-slate-700">
@@ -87,14 +91,14 @@
                             <th class="px-4 py-5 w-40">Локация / Area</th>
                             <th class="px-2 py-5 text-center">Давление / Press.</th>
                             <th class="px-2 py-5 text-center">Темп. / Temp.</th>
-                            <th class="px-4 py-5 text-center border-l border-slate-200">Компрессор / Compressor</th>
+                            <th class="px-4 py-5 text-center border-l border-slate-100 dark:border-slate-700">Компрессор / Compressor</th>
                             <th class="px-4 py-5 text-center">Питание / Power</th>
-                            <th class="px-4 py-5 text-center border-l border-slate-200">Фильтр / Filter</th>
+                            <th class="px-4 py-5 text-center border-l border-slate-100 dark:border-slate-700">Фильтр / Filter</th>
                             <th class="px-4 py-5 text-center">ТО / Check</th>
                             <th class="px-4 py-5 text-center">Статус / Alarm</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-50 dark:divide-slate-700/50"></tbody>
+                    <tbody id="tableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50"></tbody>
                 </table>
             </div>
         </div>
@@ -102,6 +106,7 @@
 
     <script>
         let data = [];
+        let isSyncLocked = false; // Блокировка от перезаписи при сохранении
         const tableBody = document.getElementById('tableBody');
         
         function getDefaultData() {
@@ -179,33 +184,27 @@
         }
 
         async function sync() {
+            if (isSyncLocked) return; // Если мы сейчас сохраняем - не трогаем данные
             const statusEl = document.getElementById('cloudStatus');
-            
-            if (CLOUD_URL.includes("ВСТАВЬ")) {
-                statusEl.innerHTML = '⚠️ НЕТ ССЫЛКИ';
-                if (data.length === 0) data = getDefaultData();
-                render();
-                return;
-            }
+            if (CLOUD_URL.includes("ВСТАВЬ")) return;
 
             try {
                 const response = await fetch(CLOUD_URL);
-                const rawCloudData = await response.json();
+                const raw = await response.json();
+                const filtered = raw.filter(item => item && item.kks && String(item.kks).toUpperCase().includes('XAA'));
                 
-                // Тот самый железобетонный фильтр
-                const cloudData = rawCloudData.filter(item => item && typeof item.kks === 'string' && item.kks.toUpperCase().includes('XAA'));
-                
-                if (cloudData.length > 0) {
-                    data = cloudData;
-                    statusEl.innerHTML = '<i class="fas fa-check-circle mr-1"></i> 🟢 ONLINE';
+                if (filtered.length > 0) {
+                    data = filtered;
+                    statusEl.innerHTML = '<i class="fas fa-check-circle mr-1"></i> ONLINE / SYNC OK';
+                    statusEl.className = "text-[9px] font-bold uppercase text-emerald-600 bg-emerald-100 px-2 py-1 rounded shadow-sm inline-block mt-1";
                 } else {
-                    statusEl.innerHTML = '🟡 ИНИЦИАЛИЗАЦИЯ...';
+                    statusEl.innerHTML = '🟡 ПУСТАЯ БАЗА / INIT...';
                     data = getDefaultData();
                     await save(true);
                 }
                 render();
             } catch (e) {
-                statusEl.innerHTML = '🔴 ОШИБКА';
+                statusEl.innerHTML = '🔴 ОШИБКА СЕТИ';
                 if (data.length === 0) data = getDefaultData();
                 render();
             }
@@ -213,71 +212,71 @@
 
         async function save(isInit = false) {
             if (CLOUD_URL.includes("ВСТАВЬ")) return;
+            isSyncLocked = true; // Блокируем Sync
+            const statusEl = document.getElementById('cloudStatus');
+            statusEl.innerHTML = '<i class="fas fa-cloud-upload-alt mr-1"></i> СОХРАНЕНИЕ...';
+            
             try {
                 await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-            } catch (e) { console.error("Save error"); }
+                // Ждем 3 секунды, чтобы Google точно записал данные, прежде чем разрешать Sync
+                setTimeout(() => { isSyncLocked = false; sync(); }, 3000);
+            } catch (e) { isSyncLocked = false; }
         }
 
         function render(fData = data) {
             tableBody.innerHTML = '';
-            let runCount = 0; let dueCount = 0;
+            let run = 0; let due = 0;
 
             fData.forEach((item, i) => {
                 const isIDU = item.type === 'IDU';
                 const days = Math.floor((new Date() - new Date(item.date || new Date().toISOString().split('T')[0]))/(1000*60*60*24));
                 const isDue = (isIDU && days >= 7) || (!isIDU && days >= 3);
-                
-                if (isDue) dueCount++;
-                if (item.comp === 'Running' || item.comp === 'Standby') runCount++;
+                if (isDue) due++;
+                if (item.comp === 'Running' || item.comp === 'Standby') run++;
                 
                 const tr = document.createElement('tr');
-                tr.className = `border-b ${isDue ? 'animate-pulse-red' : ''}`;
+                tr.className = `border-b dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all ${isDue ? 'animate-pulse-red bg-red-50/30' : ''}`;
                 
                 tr.innerHTML = `
-                    <td class="px-4 py-4"><input type="date" value="${item.date || new Date().toISOString().split('T')[0]}" onchange="u(${i},'date',this.value)" class="bg-transparent text-[10px] font-black outline-none"></td>
-                    <td class="px-4 py-4"><div class="font-mono font-black text-sm text-blue-600">${item.kks}</div><div class="text-[9px] opacity-50 uppercase font-bold">${item.type}</div></td>
-                    <td class="px-4 py-4"><input value="${item.area || ''}" onchange="u(${i},'area',this.value)" class="bg-transparent text-[10px] font-black w-full outline-none uppercase"></td>
-                    <td class="px-2 py-4 text-center">${isIDU ? '-' : `<input type="number" value="${item.press || 0}" onchange="u(${i},'press',this.value)" class="w-14 bg-white border rounded text-center text-xs font-bold py-1">`}</td>
-                    <td class="px-2 py-4 text-center">${!isIDU ? '-' : `<input type="number" value="${item.temp || 0}" onchange="u(${i},'temp',this.value)" class="w-14 bg-white border rounded text-center text-xs font-bold py-1 ${item.temp>25?'text-red-500':''}">`}</td>
+                    <td class="px-4 py-4"><input type="date" value="${item.date || new Date().toISOString().split('T')[0]}" onchange="u(${i},'date',this.value)" class="bg-transparent text-[10px] font-black outline-none dark:text-slate-300 dark:[color-scheme:dark]"></td>
+                    <td class="px-4 py-4"><div class="font-mono font-black text-sm text-blue-700 dark:text-blue-400">${item.kks}</div><div class="text-[9px] opacity-50 uppercase font-bold">${item.type}</div></td>
+                    <td class="px-4 py-4"><input value="${item.area || ''}" onchange="u(${i},'area',this.value)" class="bg-transparent text-[10px] font-black w-full outline-none uppercase text-slate-500"></td>
+                    <td class="px-2 py-4 text-center">${isIDU ? '-' : `<input type="number" step="0.1" value="${item.press || 0}" onchange="u(${i},'press',this.value)" class="w-14 bg-white dark:bg-slate-900 border rounded text-center text-xs font-bold py-1">`}</td>
+                    <td class="px-2 py-4 text-center">${!isIDU ? '-' : `<input type="number" value="${item.temp || 0}" onchange="u(${i},'temp',this.value)" class="w-14 bg-white dark:bg-slate-900 border rounded text-center text-xs font-bold py-1 ${item.temp>25?'text-red-500':''}">`}</td>
                     <td class="px-4 py-4 text-center">
-                        <select onchange="u(${i},'comp',this.value)" class="bg-transparent text-[10px] font-black uppercase outline-none ${item.comp === 'Error' ? 'text-red-500' : item.comp === 'Standby' ? 'text-amber-500' : ''}">
-                            <option value="Running" ${item.comp=='Running'?'selected':''}>В работе / Run</option>
-                            <option value="Standby" ${item.comp=='Standby'?'selected':''}>Ожидание / Stby</option>
-                            <option value="Off" ${item.comp=='Off'?'selected':''}>Выкл / Off</option>
-                            <option value="Error" ${item.comp=='Error'?'selected':''}>Ошибка / Err</option>
+                        <select onchange="u(${i},'comp',this.value)" class="bg-transparent text-[10px] font-black uppercase outline-none cursor-pointer ${item.comp === 'Error' ? 'text-red-500' : item.comp === 'Standby' ? 'text-amber-500' : 'text-emerald-600'}">
+                            <option value="Running" ${item.comp=='Running'?'selected':''}>Running</option>
+                            <option value="Standby" ${item.comp=='Standby'?'selected':''}>Standby</option>
+                            <option value="Off" ${item.comp=='Off'?'selected':''}>Off</option>
+                            <option value="Error" ${item.comp=='Error'?'selected':''}>Error</option>
                         </select>
                     </td>
                     <td class="px-4 py-4 text-center"><select onchange="u(${i},'power',this.value)" class="bg-transparent text-[10px] font-black uppercase outline-none"><option value="Normal" ${item.power=='Normal'?'selected':''}>Normal</option><option value="Off" ${item.power=='Off'?'selected':''}>Off</option></select></td>
                     <td class="px-4 py-4 text-center"><select onchange="u(${i},'filter',this.value)" class="bg-transparent text-[10px] font-black uppercase outline-none"><option value="Clean" ${item.filter=='Clean'?'selected':''}>Clean</option><option value="Dirty" ${item.filter=='Dirty'?'selected':''}>Dirty</option></select></td>
-                    <td class="px-4 py-4 text-center"><button onclick="u(${i},'date','${new Date().toISOString().split('T')[0]}')" class="w-8 h-8 rounded-full ${isDue?'bg-orange-500 text-white animate-bounce':'bg-slate-100'}"><i class="fas fa-check text-[10px]"></i></button></td>
-                    <td class="px-4 py-4 text-center"><button onclick="t(${i})" class="text-[9px] font-black uppercase px-3 py-1 rounded-full ${item.alarm=='Alarm'?'bg-red-500 text-white':'bg-emerald-100 text-emerald-700'}">${item.alarm}</button></td>
+                    <td class="px-4 py-4 text-center"><button onclick="u(${i},'date','${new Date().toISOString().split('T')[0]}')" class="w-8 h-8 rounded-full ${isDue?'bg-orange-500 text-white shadow-lg':'bg-slate-100 dark:bg-slate-800 text-slate-400'}"><i class="fas fa-check text-[10px]"></i></button></td>
+                    <td class="px-4 py-4 text-center"><button onclick="t(${i})" class="text-[9px] font-black uppercase px-3 py-1 rounded-full ${item.alarm=='Alarm'?'bg-red-500 text-white':'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30'}">${item.alarm}</button></td>
                 `;
                 tableBody.appendChild(tr);
             });
 
             document.getElementById('statTotal').innerText = data.length;
-            document.getElementById('statComp').innerText = runCount;
-            document.getElementById('statDue').innerText = dueCount;
+            document.getElementById('statComp').innerText = run;
+            document.getElementById('statDue').innerText = due;
         }
 
         function u(i, f, v) { data[i][f] = v; render(); save(); }
         function t(i) { data[i].alarm = data[i].alarm == 'Normal' ? 'Alarm' : 'Normal'; render(); save(); }
-        
-        function resetToDefault() { 
-            data = getDefaultData(); 
-            save(true); 
-            render(); 
-            alert("✅ Жесткий сброс выполнен. Google Таблица перезаписана чистыми данными. Баг устранен.");
-        }
-        
+        function resetToDefault() { if(confirm("Сбросить базу?")) { data = getDefaultData(); save(true); render(); } }
         function toggleTheme() { document.documentElement.classList.toggle('dark'); }
-        function exportCSV() { /* export logic */ }
-        function copyTelegramReport() { /* report logic */ }
-
+        function exportCSV() { const b = new Blob(["\ufeff" + Papa.unparse(data)], { type: 'text/csv;charset=utf-8;' }); const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "MDV_V8_Report.csv"; a.click(); }
+        function copyTelegramReport() { navigator.clipboard.writeText(`⚡ MDV V8 REPORT: ${new Date().toLocaleDateString()}\n🔹 Units: ${data.length}\n🔹 Running: ${document.getElementById('statComp').innerText}\n🔹 Maintenance Due: ${document.getElementById('statDue').innerText}`).then(()=>alert("Copied!")); }
+        
         window.onload = () => {
             sync();
-            setInterval(sync, 60000);
+            setInterval(sync, 60000); // Авто-обновление раз в минуту
         };
+
+        document.getElementById('search').oninput = e => render(data.filter(x => x.kks.toLowerCase().includes(e.target.value.toLowerCase()) || x.area.toLowerCase().includes(e.target.value.toLowerCase())));
     </script>
 </body>
 </html>
